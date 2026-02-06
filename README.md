@@ -32,4 +32,5 @@ An ESP32-based 8x8 LED matrix controller with a reactive web dashboard. The syst
 ## Dependencies
 * `ESPAsyncWebServer` & `AsyncTCP`
 * `Adafruit_NeoMatrix` & `Adafruit_NeoPixel`
-* `BH1
+* `BH1750`
+* `LittleFS` 
