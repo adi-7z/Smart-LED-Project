@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Smart LED</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root{--bg:#000;--surface:#1C1C1E;--text:#FFF;--sec:#555}
+    *{box-sizing:border-box}
+    body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;margin:0;padding:20px 10px;display:flex;flex-direction:column;align-items:center}
+    .header{width:100%;max-width:600px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;margin-bottom:20px}
+    h2{grid-column:2;font-weight:700;font-size:1.5rem;margin:0;letter-spacing:-0.5px}
+    .btn-wrapper{grid-column:3;display:flex;justify-content:flex-end}
+    .mode-btn{padding:10px 0;border-radius:14px;font-size:0.8rem;font-weight:700;text-transform:uppercase;cursor:pointer;user-select:none;transition:0.2s;text-align:center;width:80px}
+    .b-auto{background:#2C2C2E;color:#888;border:1px solid #333}
+    .b-man{background:#FFF;color:#000;border:1px solid #fff;box-shadow:0 0 15px rgba(255,255,255,0.15)}
+    .b-man:active,.b-auto:active{transform:scale(0.96)}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;max-width:600px}
+    .card{background:var(--surface);padding:16px;border-radius:14px}
+    .span-2{grid-column:span 2}
+    h3{font-size:0.75rem;color:#888;margin:0 0 12px 0;text-transform:uppercase;letter-spacing:1px;font-weight:700}
+    .row{display:flex;align-items:center;justify-content:space-between;margin-bottom:15px}
+    .label{font-size:0.9rem;font-weight:600}
+    .val-tag{font-family:monospace;color:var(--text);font-size:0.9rem}
+    input[type=range]{-webkit-appearance:none;width:100%;height:28px;background:#2C2C2E;border-radius:14px;outline:none;margin-top:5px}
+    input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:28px;height:28px;border-radius:50%;background:#fff;cursor:pointer;border:2px solid #000}
+    .graph-box{height:90px;width:100%;position:relative}
+    .big-num{font-size:1.8rem;font-weight:700;color:#fff;letter-spacing:-1px}
+    .unit{font-size:0.9rem;color:#666;margin-left:2px}
+    
+    .color-picker{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:15px}
+    .color-btn{width:100%;aspect-ratio:1;border-radius:10px;border:2px solid transparent;cursor:pointer;transition:0.2s}
+    .color-btn:hover{transform:scale(1.1)}
+    .color-btn.active{border-color:#fff;box-shadow:0 0 10px rgba(255,255,255,0.3)}
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div></div>
+    <h2>Smart LED</h2>
+    <div class="btn-wrapper">
+      <div id="mode-btn" class="mode-btn b-auto" onclick="toggleMode()">AUTO</div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h3>Manual</h3>
+      <div class="color-picker">
+        <div class="color-btn" style="background:#FF0000" onclick="setColor('FF0000')"></div>
+        <div class="color-btn" style="background:#00FF00" onclick="setColor('00FF00')"></div>
+        <div class="color-btn" style="background:#0000FF" onclick="setColor('0000FF')"></div>
+        <div class="color-btn active" style="background:#FFFFFF" onclick="setColor('FFFFFF')"></div>
+        <div class="color-btn" style="background:#FFFF00" onclick="setColor('FFFF00')"></div>
+        <div class="color-btn" style="background:#FF00FF" onclick="setColor('FF00FF')"></div>
+        <div class="color-btn" style="background:#00FFFF" onclick="setColor('00FFFF')"></div>
+        <div class="color-btn" style="background:#FFA500" onclick="setColor('FFA500')"></div>
+      </div>
+      <div class="row"><span class="label">Brightness</span><span id="v-br" class="val-tag">--</span></div>
+      <input type="range" min="0" max="255" step="5" id="i-br" oninput="updateSlider('br',this.value)" onchange="set('b',this.value)">
+    </div>
+
+    <div class="card">
+      <h3>Auto Config</h3>
+      <div class="row"><span class="label">Light Threshold</span><span id="v-al" class="val-tag">--</span></div>
+      <input type="range" min="10" max="1000" step="10" id="i-al" oninput="updateSlider('al',this.value)" onchange="set('al',this.value)">
+      <div style="height:15px"></div>
+      <div class="row"><span class="label">Distance Threshold</span><span id="v-ad" class="val-tag">--</span></div>
+      <input type="range" min="50" max="400" step="10" id="i-ad" oninput="updateSlider('ad',this.value)" onchange="set('ad',this.value)">
+    </div>
+
+    <div class="card">
+      <h3>Temperature</h3>
+      <div><span id="txt-tp" class="big-num">--</span><span class="unit">&deg;C</span></div>
+      <div class="graph-box"><canvas id="c-tp"></canvas></div>
+    </div>
+
+    <div class="card">
+      <h3>Ambient Light</h3>
+      <div><span id="txt-lx" class="big-num">--</span><span class="unit">lx</span></div>
+      <div class="graph-box"><canvas id="c-lx"></canvas></div>
+    </div>
+
+    <div class="card span-2">
+      <h3>Distance</h3>
+      <div><span id="txt-ds" class="big-num">--</span><span class="unit">cm</span></div>
+      <div class="graph-box"><canvas id="c-ds"></canvas></div>
+    </div>
+  </div>
+
+<script>
+const $=id=>document.getElementById(id);
+let curMode=0;
+let pendingUpdates={};
+
+function updateSlider(k,v){
+  $('v-'+k).innerText=v;
+  pendingUpdates[k]=v;
+}
+
+function set(k,v){
+  // FIXED: Removed keepalive:true to prevent socket exhaustion
+  fetch(`/set?${k}=${v}`);
+  if(k=='c'||k=='b')updateModeUI(1);
+}
+
+function setColor(hex){
+  document.querySelectorAll('.color-btn').forEach(b=>b.classList.remove('active'));
+  event.target.classList.add('active');
+  set('c',hex);
+}
+
+function toggleMode(){
+  let m=curMode?0:1;
+  set('m',m);
+  updateModeUI(m);
+}
+
+function updateModeUI(m){
+  curMode=m;
+  const btn=$('mode-btn');
+  btn.className='mode-btn '+(m?'b-man':'b-auto');
+  btn.innerText=m?'MANUAL':'AUTO';
+}
+
+function mkChart(id,color,minVal){
+  return new Chart($(id),{
+    type:'line',
+    data:{labels:Array(30).fill(''),datasets:[{data:Array(30).fill(null),borderColor:color,backgroundColor:color+'15',fill:true}]},
+    options:{
+      animation:false,responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      elements:{point:{radius:0},line:{borderWidth:2,tension:0.3}},
+      scales:{x:{display:false},y:{display:false,suggestedMin:minVal}}
+    }
+  });
+}
+
+const charts={
+  tp:mkChart('c-tp','#FF453A',8),
+  ds:mkChart('c-ds','#0A84FF',50),
+  lx:mkChart('c-lx','#FFD60A',10)
+};
+
+function loop(){
+  fetch('/data')
+    .then(r=>r.json())
+    .then(d=>{
+      if(d.md!=curMode)updateModeUI(d.md);
+      
+      const sliders={al:'i-al',ad:'i-ad',br:'i-br'};
+      for(let k in sliders){
+        if(document.activeElement.id!==sliders[k]){
+          if(!pendingUpdates[k]){
+            $('v-'+k).innerText=d[k];
+            $(sliders[k]).value=d[k];
+          }else if(pendingUpdates[k]==d[k]){
+            delete pendingUpdates[k];
+          }
+        }
+      }
+
+      ['tp','ds','lx'].forEach(k=>{
+        const c=charts[k];
+        c.data.datasets[0].data.push(d[k]);
+        c.data.datasets[0].data.shift();
+        c.update();
+        $('txt-'+k).innerText=d[k].toFixed(0);
+      });
+    })
+    .catch(()=>{})
+    .finally(()=>setTimeout(loop,1000));
+}
+loop();
+</script>
+</body>
+</html>
