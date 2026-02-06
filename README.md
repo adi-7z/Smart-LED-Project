@@ -17,6 +17,8 @@ An ESP32-based 8x8 LED matrix controller with a reactive web dashboard. The syst
 * **Display:** 8x8 NeoPixel RGB Matrix (WS2812B)
 * **Sensors:** * BH1750 (I2C Light Sensor)
     * HC-SR04 (Ultrasonic Distance Sensor)
+![led1](https://github.com/user-attachments/assets/0efab13f-efeb-4c4e-ab5c-47215bc28e41)
+![led inside view](https://github.com/user-attachments/assets/76285999-8184-449a-80c2-7a9d8cdccfd3)
 
 ## Pinout Configuration
 | Component | ESP32 Pin | Note |
