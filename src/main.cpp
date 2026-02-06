@@ -67,8 +67,8 @@ float readDistanceCM() {
   delayMicroseconds(10);
   digitalWrite(TRIG_PIN, LOW);
 
-  long d = pulseIn(ECHO_PIN, HIGH, ULTRASONIC_TIMEOUT);
-  return d ? d * 0.0343f * 0.5f : state.maxDist;
+  long d = pulseIn(ECHO_PIN, HIGH, ULTRASONIC_TIMEOUT); // time for ultrasonic travel to and fro.
+  return d ? d * 0.0343f * 0.5f : state.maxDist; // time x speed (cm/microsecond) /2 - distance from sensor to wall.
 }
 
 /* ================= API ================= */
